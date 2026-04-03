@@ -11,6 +11,7 @@ const App = () => {
   const [loading, setLoading] = useState(false);
   const [bleDevice, setBleDevice] = useState(null);
   const [bleChar, setBleChar] = useState(null);
+  const [gear, setGear] = useState('D');
   const [controls, setControls] = useState({ s: 0, v: 0, m: 255 });
   const [headlights, setHeadlights] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
@@ -38,7 +39,7 @@ const App = () => {
       const server = await device.gatt.connect();
       const service = await server.getPrimaryService('4fafc201-1fb5-459e-8fcc-c5c9c331914b');
       const char = await service.getCharacteristic('beb5483e-36e1-4688-b7f5-ea07361b26a8');
-
+      
       setBleDevice(device);
       setBleChar(char);
       setConnected(true);
@@ -66,16 +67,15 @@ const App = () => {
       if (connected && bleChar) {
         const packet = JSON.stringify({
           s: controls.s,
-          v: controls.v,
-          m: controls.m,
-          h: headlights ? 1 : 0
+          v: gear === 'R' ? -controls.v : controls.v,
+          m: controls.m
         });
         const encoder = new TextEncoder();
         bleChar.writeValue(encoder.encode(packet));
       }
     }, 50);
     return () => clearInterval(interval);
-  }, [controls, bleChar, connected, headlights]);
+  }, [controls, gear, bleChar, connected]);
 
   // Haptic Feedback Engine
   useEffect(() => {
@@ -94,16 +94,23 @@ const App = () => {
         setGamepadActive(true);
         // Steering: Axis 0 (Left Stick X)
         const sVal = Math.round(gp.axes[0] * 100);
-        // Acceleration: RT (Trigger) or Axis 5, Brake: LT or Axis 2
+        // Throttle and Steering
         const accel = gp.buttons[7]?.value || 0;
         const brake = gp.buttons[6]?.value || 0;
-
+        
         setControls(prev => ({
           ...prev,
           s: Math.abs(sVal) > 5 ? sVal : 0,
-          v: accel > 0.05 ? Math.round(accel * 100) : (brake > 0.05 ? 0 : prev.v)
+          // Magnitude only. Direction is locked to UI Gear state.
+          v: accel > 0.05 ? Math.round(accel * 100) : 0
         }));
-        if (brake > 0.5) setControls(prev => ({ ...prev, v: 0 }));
+        
+        if (brake > 0.2) {
+          setControls(prev => ({ ...prev, v: 0 }));
+          setBraking(true);
+        } else {
+          setBraking(false);
+        }
       } else {
         setGamepadActive(false);
       }
@@ -227,18 +234,12 @@ const App = () => {
 
   return (
     <>
-      <AnimatePresence>
-        {isPortrait && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 30 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="orientation-tip"
-          >
-            <RefreshCcw size={14} className="spin" /> LANDSCAPE RECOMMENDED
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <div className="portrait-lock">
+        <Zap size={48} color="#00ffcc" />
+        <h2 style={{ marginTop: '1rem', fontFamily: 'Orbitron' }}>ULTIMA ORIENTATION REQUIRED</h2>
+        <p style={{ opacity: 0.5, marginTop: '0.5rem' }}>Rotate your device to landscape for full control.</p>
+        <RefreshCcw size={24} style={{ marginTop: '2rem', animation: 'spin 2s linear infinite' }} />
+      </div>
 
       <div className="ultima-container">
         <header className="header-bar">
@@ -259,100 +260,206 @@ const App = () => {
           </div>
         </header>
 
-        <main className="cockpit-view">
-          {/* COCKPIT LEFT: Pedals & Auxiliary Controls */}
-          <div className="cockpit-left">
-            <div className="pedal-section-hud">
-              <motion.div className="hud-pedal brake" onPointerDown={handleBrake}>
-                <div className="hud-label">STOP</div>
-              </motion.div>
-              <motion.div className="hud-pedal gas" onPointerDown={handleAccel} onPointerUp={releaseAccel}>
-                <div className="hud-label">THRUST</div>
-              </motion.div>
+        <section className="instrument-cluster">
+          <div className="steering-section">
+            <div
+              className="wheel-housing"
+              ref={steerArea}
+              onMouseDown={onMouseDownSteer}
+              onTouchStart={handleSteerStart}
+              onTouchMove={handleSteerMove}
+              onTouchEnd={stopSteering}
+              style={{ transform: `rotate(${rotation}deg)` }}
+            >
+              <img src={premiumWheel} className="premium-pro-wheel" alt="Steering Wheel" />
+              <div className="premium-hub">CYBER</div>
+            </div>
+          </div>
+
+          {/* Professional 4WD Chassis & Telemetry Hub */}
+          <div className="chassis-telemetry">
+            <div className="chassis-header">
+              <div className={`status-4wd ${connected ? 'active' : ''}`}>
+                <Zap size={12} /> {gear === 'D' ? '4WD DRIVE' : 'REVERSE ENGAGED'}
+              </div>
+              <div className="gear-toggle" onClick={() => { setGear(g => g === 'D' ? 'R' : 'D'); hapticFeedback(30); }}>
+                <span className={gear === 'D' ? 'active' : ''}>D</span>
+                <span className={gear === 'R' ? 'active' : ''}>R</span>
+              </div>
+            </div>
+
+            <div className="chassis-body">
+              {/* Ground Underglow Lighting */}
+              <motion.div 
+                className="chassis-underglow"
+                animate={{ 
+                  scale: controls.v > 0 ? [1, 1.2, 1] : 1,
+                  opacity: controls.v > 0 ? 0.3 : (braking ? 0.6 : 0.1),
+                  background: braking ? 'rgba(255, 40, 0, 0.4)' : (gear === 'R' ? 'rgba(255, 60, 0, 0.4)' : 'rgba(0, 255, 204, 0.4)')
+                }}
+                transition={{ repeat: Infinity, duration: 1 }}
+              ></motion.div>
+
+              {/* Intelligent Lighting System */}
+              <motion.div 
+                className={`chassis-led head left ${headlights ? 'on' : ''}`}
+                animate={{ scale: headlights ? [1, 1.1, 1] : 1 }}
+                transition={{ repeat: Infinity, duration: 2 }}
+              ></motion.div>
+              <motion.div 
+                className={`chassis-led head right ${headlights ? 'on' : ''}`}
+                animate={{ scale: headlights ? [1, 1.1, 1] : 1 }}
+                transition={{ repeat: Infinity, duration: 2 }}
+              ></motion.div>
+              
+              <motion.div 
+                className={`chassis-led tail left ${braking ? 'active' : ''} ${headlights ? 'dim' : ''}`}
+                animate={{ scale: braking ? 1.4 : 1 }}
+              ></motion.div>
+              <motion.div 
+                className={`chassis-led tail right ${braking ? 'active' : ''} ${headlights ? 'dim' : ''}`}
+                animate={{ scale: braking ? 1.4 : 1 }}
+              ></motion.div>
+              
+              {/* Beaming Headlight Rays */}
+              <AnimatePresence>
+                {headlights && (
+                  <motion.div 
+                    className="light-beams"
+                    initial={{ opacity: 0, scale: 0.5 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.5 }}
+                  >
+                    <div className="beam left"></div>
+                    <div className="beam right"></div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Wheel calculations based on differential drive formula (v+s, v-s) */}
+              {(() => {
+                const vel = controls.v;
+                const steer = controls.s;
+                const leftInt = Math.abs(vel + steer) / 100;
+                const rightInt = Math.abs(vel - steer) / 100;
+                
+                return (
+                  <>
+                    <div className="axle front">
+                      <motion.div 
+                        className={`wheel fl ${vel > 0 || Math.abs(steer) > 5 ? 'active' : ''}`} 
+                        animate={{ rotate: rotation/12, scale: 1 + leftInt * 0.1 }}
+                        style={{ borderColor: gear === 'R' ? 'var(--accent-warn)' : 'var(--accent-neon)' }}
+                      >
+                        {leftInt > 0.1 && <div className="motor-pulse"></div>}
+                      </motion.div>
+                      <motion.div 
+                        className={`wheel fr ${vel > 0 || Math.abs(steer) > 5 ? 'active' : ''}`} 
+                        animate={{ rotate: rotation/12, scale: 1 + rightInt * 0.1 }}
+                        style={{ borderColor: gear === 'R' ? 'var(--accent-warn)' : 'var(--accent-neon)' }}
+                      >
+                        {rightInt > 0.1 && <div className="motor-pulse"></div>}
+                      </motion.div>
+                    </div>
+                    <div className="axle rear">
+                      <motion.div 
+                        className={`wheel rl ${vel > 0 || Math.abs(steer) > 5 ? 'active' : ''}`} 
+                        animate={{ scale: 1 + leftInt * 0.1 }}
+                        style={{ borderColor: gear === 'R' ? 'var(--accent-warn)' : 'var(--accent-neon)' }}
+                      >
+                        {leftInt > 0.1 && <div className="motor-pulse"></div>}
+                      </motion.div>
+                      <motion.div 
+                        className={`wheel rr ${vel > 0 || Math.abs(steer) > 5 ? 'active' : ''}`} 
+                        animate={{ scale: 1 + rightInt * 0.1 }}
+                        style={{ borderColor: gear === 'R' ? 'var(--accent-warn)' : 'var(--accent-neon)' }}
+                      >
+                        {rightInt > 0.1 && <div className="motor-pulse"></div>}
+                      </motion.div>
+                    </div>
+                  </>
+                );
+              })()}
+              <div className="chassis-glow" style={{ background: gear === 'R' ? 'radial-gradient(circle, rgba(255, 60, 0, 0.2) 0%, transparent 70%)' : '' }}></div>
             </div>
             
-            <div className="action-sidebar" style={{ flexDirection: 'row', gap: '1rem' }}>
-              <button className={`side-btn ${headlights ? 'active' : ''}`} onClick={() => setHeadlights(!headlights)}>
+            <div className="telemetry-data">
+              <div className="data-node">
+                <label>LOAD L</label>
+                <span>{Math.round(Math.abs(controls.v + controls.s))}%</span>
+              </div>
+              <div className="data-node">
+                <label>LOAD R</label>
+                <span>{Math.round(Math.abs(controls.v - controls.s))}%</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="central-hud">
+            <div className="gauge-ring">
+              <div className="gauge-needle" style={{ transform: `rotate(${(controls.v * 1.8) - 90}deg)` }}></div>
+              <div className="speed-display">
+                <div className="val">{controls.v}</div>
+                <div className="unit">Engine Load %</div>
+                
+                {/* Intelligent Tap-to-Shift Gear HUD */}
+                <div className="gear-hud-container" onClick={() => { setGear(g => g === 'D' ? 'R' : 'D'); hapticFeedback(50); }}>
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={gear}
+                      initial={{ y: 20, opacity: 0, scale: 0.5 }}
+                      animate={{ y: 0, opacity: 1, scale: 1 }}
+                      exit={{ y: -20, opacity: 0, scale: 0.5 }}
+                      className={`gear-hud-label ${gear === 'D' ? 'drive' : 'reverse'}`}
+                    >
+                      {gear}
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Pedal Section (Pro HUD Style) */}
+          <div className="pedal-section-hud">
+            <motion.div
+              className="hud-pedal brake"
+              onPointerDown={handleBrake}
+              whileTap={{ scale: 0.98 }}
+            >
+              <div className="hud-label">BRAKE</div>
+              <div className="hud-gauge">
+                <div className="gauge-track"></div>
+                <div className="gauge-fill-red" style={{ height: controls.v === 0 && !isDragging.current ? '100%' : '0%' }}></div>
+              </div>
+              <div className="hud-status">{controls.v === 0 && !isDragging.current ? 'ACTIVE' : 'IDLE'}</div>
+            </motion.div>
+
+            <motion.div
+              className="hud-pedal gas"
+              onPointerDown={handleAccel}
+              onPointerUp={releaseAccel}
+              onPointerLeave={releaseAccel}
+              whileTap={{ scale: 0.98 }}
+            >
+              <div className="hud-label">THRUST</div>
+              <div className="hud-gauge">
+                <div className="gauge-track"></div>
+                <div className="gauge-fill-cyan" style={{ height: `${controls.v}%` }}></div>
+              </div>
+              <div className="hud-status">{controls.v}%</div>
+            </motion.div>
+
+            <div className="action-sidebar">
+              <button className={`side-btn ${headlights ? 'active' : ''}`} onClick={() => { setHeadlights(!headlights); hapticFeedback(20); }}>
                 <Lightbulb size={24} />
               </button>
               <button className="side-btn danger" onClick={handleBrake}>
-                <Zap size={24} />
+                <Power size={24} />
               </button>
             </div>
           </div>
-
-          {/* COCKPIT CENTER: Analog Mission Hud */}
-          <div className="cockpit-center">
-            <div className="chassis-telemetry" style={{ width: '100%', padding: '0' }}>
-              <div className="chassis-header">
-                <div className={`status-4wd ${connected ? 'active' : ''}`}>
-                  LIVE.CHASSIS: {connected ? 'ACTIVE' : 'OFFLINE'}
-                </div>
-              </div>
-
-              <div className="chassis-body" style={{ height: '220px', margin: '1rem 0' }}>
-                <motion.div className="chassis-underglow" animate={{ opacity: controls.v > 0 ? 0.4 : 0.1 }}></motion.div>
-                
-                {/* Xenon Lighting Systems */}
-                <div className={`chassis-led head left ${headlights ? 'on' : ''}`}></div>
-                <div className={`chassis-led head right ${headlights ? 'on' : ''}`}></div>
-                <div className={`chassis-led tail left ${braking ? 'active' : ''} ${headlights ? 'dim' : ''}`}></div>
-                <div className={`chassis-led tail right ${braking ? 'active' : ''} ${headlights ? 'dim' : ''}`}></div>
-
-                {/* 4WD Wheel Loads & Differential Mapping */}
-                {(() => {
-                  const vel = controls.v;
-                  const steer = controls.s;
-                  const leftInt = Math.abs(vel + steer) / 100;
-                  const rightInt = Math.abs(vel - steer) / 100;
-                  return (
-                    <>
-                      <div className="axle front">
-                        <motion.div className={`wheel fl ${vel > 5 ? 'active' : ''}`} animate={{ rotate: rotation/12, scale: 1 + leftInt * 0.1 }}></motion.div>
-                        <motion.div className={`wheel fr ${vel > 5 ? 'active' : ''}`} animate={{ rotate: rotation/12, scale: 1 + rightInt * 0.1 }}></motion.div>
-                      </div>
-                      <div className="axle rear">
-                        <motion.div className={`wheel rl ${vel > 5 ? 'active' : ''}`} animate={{ scale: 1 + leftInt * 0.1 }}></motion.div>
-                        <motion.div className={`wheel rr ${vel > 5 ? 'active' : ''}`} animate={{ scale: 1 + rightInt * 0.1 }}></motion.div>
-                      </div>
-                    </>
-                  );
-                })()}
-              </div>
-            </div>
-
-            <div className="central-hud">
-              <div className="gauge-ring" style={{ width: '180px', height: '180px' }}>
-                <div className="speed-display">
-                  <div className="unit">POWER %</div>
-                  <div className="val">{controls.v}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* COCKPIT RIGHT: Primary Steering Authority */}
-          <div className="cockpit-right">
-            <div className="steering-section">
-              <div
-                className="wheel-housing"
-                ref={steerArea}
-                onMouseDown={onMouseDownSteer}
-                onTouchStart={handleSteerStart}
-                onTouchMove={handleSteerMove}
-                onTouchEnd={stopSteering}
-                style={{ 
-                  transform: `rotate(${rotation}deg)`,
-                  width: '380px',
-                  height: '380px'
-                }}
-              >
-                <img src={premiumWheel} className="premium-pro-wheel" alt="Steering Wheel" style={{ opacity: 1, filter: 'none' }} />
-                <div className="premium-hub" style={{ border: '4px solid #222' }}>DRIVE</div>
-              </div>
-            </div>
-          </div>
-        </main>
+        </section>
 
         <footer style={{ position: 'absolute', bottom: 10, right: 20, opacity: 0.2, fontSize: '0.6rem', letterSpacing: '2px' }}>
           CORE v4.0 PRO | LANDSCAPE OPTIMIZED | HAPTIC ACTIVE
