@@ -1,0 +1,731 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Rajdhani:wght@300;600;700&display=swap');
+
+:root {
+  --bg-ultima: #050506;
+  --panel-metal: #121214;
+  --panel-border: rgba(255, 255, 255, 0.08);
+  --accent-neon: #00ffcc;
+  --accent-warn: #ff3c00;
+  --glow-rgba: rgba(0, 255, 204, 0.3);
+  --metal-shine: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, transparent 50%, rgba(255, 255, 255, 0.02) 100%);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  touch-action: none;
+}
+
+body {
+  background-color: var(--bg-ultima);
+  color: #fff;
+  font-family: 'Rajdhani', sans-serif;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Force Landscape Suggestion */
+@media screen and (orientation: portrait) {
+  .portrait-lock {
+    display: flex;
+  }
+
+  .ultima-container {
+    display: none;
+  }
+}
+
+@media screen and (orientation: landscape) {
+  .portrait-lock {
+    display: none;
+  }
+
+  .ultima-container {
+    display: flex;
+  }
+}
+
+.portrait-lock {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  z-index: 999;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 2rem;
+}
+
+.ultima-container {
+  width: 100%;
+  height: 100%;
+  padding: 1.5rem;
+  flex-direction: column;
+  position: relative;
+  background: radial-gradient(circle at center, #1a1a20 0%, #050506 100%);
+}
+
+/* Glass-Metal Side Panels */
+.header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 50px;
+  margin-bottom: 1rem;
+}
+
+.logo-section h1 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.2rem;
+  letter-spacing: 4px;
+  background: linear-gradient(90deg, #fff, var(--accent-neon));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+}
+
+.mode-selector {
+  display: flex;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 3px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.mode-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.3);
+  padding: 0.4rem 1rem;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  border-radius: 15px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mode-btn.active {
+  background: var(--accent-neon);
+  color: #000;
+  box-shadow: 0 0 15px var(--glow-rgba);
+}
+
+.ip-config input {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--panel-border);
+  color: var(--accent-neon);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.8rem;
+  width: 140px;
+  outline: none;
+  transition: all 0.3s;
+}
+
+.ip-config input:focus {
+  border-color: var(--accent-neon);
+  box-shadow: 0 0 10px var(--glow-rgba);
+}
+
+.settings-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.settings-btn:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.spin {
+  animation: spin 2s linear infinite;
+}
+
+.gp-status {
+  padding: 0.4rem 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 2px;
+  color: rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid transparent;
+  transition: all 0.3s;
+}
+
+.gp-status.active {
+  color: #ff3c00; /* Remote active is secondary accent */
+  border-color: rgba(255, 60, 0, 0.3);
+  background: rgba(255, 60, 0, 0.05);
+  box-shadow: 0 0 10px rgba(255, 60, 0, 0.1);
+}
+
+/* 4WD Chassis Telemetry */
+/* 4WD Chassis Telemetry & Lighting */
+.chassis-led {
+  position: absolute;
+  width: 10px;
+  height: 5px;
+  border-radius: 4px;
+  z-index: 10;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.chassis-underglow {
+  position: absolute;
+  top: 10%;
+  left: 10%;
+  width: 80%;
+  height: 80%;
+  border-radius: 50%;
+  filter: blur(40px);
+  z-index: 1;
+  pointer-events: none;
+  transition: background 0.6s ease;
+}
+
+.head { top: 12px; }
+.tail { bottom: 12px; }
+.left { left: 18px; }
+.right { right: 18px; }
+
+/* Xenon Front Lighting */
+.head.on {
+  background: #fff;
+  box-shadow: 0 0 15px #fff, 0 0 30px var(--accent-neon);
+}
+
+/* Intelligent Rear Lighting */
+.tail.dim {
+  background: rgba(255, 40, 0, 0.3);
+  box-shadow: 0 0 5px rgba(255, 40, 0, 0.1);
+}
+
+.tail.active {
+  background: #ff2800;
+  box-shadow: 0 0 20px #ff2800, 0 0 40px rgba(255, 40, 0, 0.6);
+  transform: scaleX(1.5);
+}
+
+/* Beaming Radiance */
+.light-beams {
+  position: absolute;
+  top: -40px;
+  width: 100%;
+}
+
+.beam {
+  position: absolute;
+  width: 30px;
+  height: 80px;
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.2), transparent);
+  filter: blur(8px);
+  clip-path: polygon(10% 100%, 90% 100%, 100% 0, 0 0);
+  animation: beamPulse 2s ease-in-out infinite;
+}
+
+.beam.left { left: -5px; }
+.beam.right { right: -5px; }
+
+@keyframes beamPulse {
+  0%, 100% { opacity: 0.3; transform: scaleY(1); }
+  50% { opacity: 0.8; transform: scaleY(1.3); }
+}
+
+/* High-End Gear HUD Animation */
+.gear-hud-container {
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 5px;
+}
+
+.gear-hud-label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  text-shadow: 0 0 20px rgba(255,255,255,0.4);
+}
+
+.gear-hud-label.drive {
+  color: var(--accent-neon);
+  text-shadow: 0 0 20px var(--glow-rgba);
+}
+
+.gear-hud-label.reverse {
+  color: #ff3c00;
+  text-shadow: 0 0 20px rgba(255, 60, 0, 0.4);
+}
+
+.chassis-telemetry {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+}
+
+.chassis-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.gear-toggle {
+  display: flex;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  padding: 2px;
+  cursor: pointer;
+}
+
+.gear-toggle span {
+  padding: 0.3rem 0.8rem;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.6rem;
+  color: rgba(255,255,255,0.2);
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.gear-toggle span.active {
+  background: #fff;
+  color: #000;
+  box-shadow: 0 0 10px rgba(255,255,255,0.3);
+}
+
+.status-4wd {
+  font-size: 0.6rem;
+  letter-spacing: 2px;
+  color: rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 900;
+}
+
+.status-4wd.active {
+  color: var(--accent-neon);
+  text-shadow: 0 0 10px var(--accent-neon);
+}
+
+.chassis-body {
+  width: 110px;
+  height: 180px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 40px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  padding: 15px 0;
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.axle {
+  display: flex;
+  justify-content: space-between;
+  width: 140%;
+  position: absolute;
+  left: -20%;
+  z-index: 2;
+}
+
+.front { top: 25px; }
+.rear { bottom: 25px; }
+
+.wheel {
+  width: 22px;
+  height: 40px;
+  background: #050506;
+  border: 2px solid rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.wheel.active {
+  box-shadow: 0 0 15px var(--glow-rgba);
+}
+
+.motor-pulse {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, transparent, var(--accent-neon), transparent);
+  animation: motorScan 0.5s linear infinite;
+  opacity: 0.4;
+}
+
+@keyframes motorScan {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+.chassis-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 70%;
+  height: 80%;
+  background: radial-gradient(circle, var(--glow-rgba) 0%, transparent 70%);
+  opacity: 0.1;
+  transition: background 0.3s;
+}
+
+.telemetry-data {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.data-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.data-node label {
+  font-size: 0.5rem;
+  letter-spacing: 1px;
+  opacity: 0.4;
+}
+
+.data-node span {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* UI Elements */
+.fs-toggle {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--accent-neon);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.fs-toggle:hover {
+  background: rgba(0, 255, 204, 0.1);
+  box-shadow: 0 0 15px var(--glow-rgba);
+}
+
+.connection-pill {
+  background: var(--panel-metal);
+  border: 1px solid var(--panel-border);
+  padding: 0.5rem 1.2rem;
+  border-radius: 30px;
+  font-size: 0.7rem;
+  letter-spacing: 1.5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-warn);
+}
+
+.pulse-dot.online {
+  background: var(--accent-neon);
+  box-shadow: 0 0 10px var(--accent-neon);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.5);
+    opacity: 0.5;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Central Instrument Cluster */
+.instrument-cluster {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+}
+
+/* Premium Steering (User Asset) */
+.steering-section {
+  width: 380px;
+  height: 380px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.wheel-housing {
+  width: 320px;
+  height: 320px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: grab;
+  transition: transform 0.05s linear;
+}
+
+.wheel-housing:active {
+  cursor: grabbing;
+}
+
+.premium-pro-wheel {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 15px 35px rgba(0,0,0,0.9));
+}
+
+.premium-hub {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  background: radial-gradient(circle, #1a1a1e 0%, #080808 100%);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 50%;
+  z-index: 5;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 3px;
+  color: var(--accent-neon);
+  box-shadow: inset 0 2px 10px rgba(255,255,255,0.02), 0 10px 20px rgba(0,0,0,0.8);
+  pointer-events: none;
+}
+
+/* Tachometer (Center) */
+.central-hud {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.gauge-ring {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  border: 4px solid rgba(255, 255, 255, 0.05);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: radial-gradient(circle, rgba(0, 255, 204, 0.05) 0%, transparent 70%);
+}
+
+.gauge-needle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2px;
+  height: 90px;
+  background: var(--accent-neon);
+  transform-origin: bottom center;
+  margin-top: -90px;
+  box-shadow: 0 0 15px var(--accent-neon);
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.speed-display {
+  text-align: center;
+}
+
+.speed-display .val {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 3.5rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.speed-display .unit {
+  font-size: 0.8rem;
+  letter-spacing: 3px;
+  color: var(--accent-neon);
+  text-transform: uppercase;
+}
+
+/* Professional UI HUD Pedals */
+.pedal-section-hud {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-end;
+  height: 100%;
+  padding: 1rem;
+}
+
+.hud-pedal {
+  width: 90px;
+  height: 240px;
+  background: rgba(20, 20, 25, 0.4);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.2rem 0;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.hud-pedal:active {
+  background: rgba(40, 40, 50, 0.5);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.hud-label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 2px;
+  color: rgba(255,255,255,0.4);
+  font-weight: 900;
+}
+
+.hud-gauge {
+  flex: 1;
+  width: 12px;
+  background: rgba(0,0,0,0.3);
+  margin: 1rem 0;
+  border-radius: 10px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.02);
+}
+
+.gauge-fill-red, .gauge-fill-cyan {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  border-radius: 10px;
+  transition: height 0.1s cubic-bezier(0, 0, 0.2, 1);
+}
+
+.gauge-fill-red {
+  background: linear-gradient(to top, #ff3c00, #ff7b00);
+  box-shadow: 0 0 20px rgba(255, 60, 0, 0.8), 0 0 40px rgba(255, 60, 0, 0.4);
+}
+
+.gauge-fill-cyan {
+  background: linear-gradient(to top, #00ffcc, #00ffff);
+  box-shadow: 0 0 20px rgba(0, 255, 204, 0.8), 0 0 40px rgba(0, 255, 204, 0.4);
+}
+
+.hud-status {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 1px;
+}
+
+/* Quick Actions Sidebar */
+.action-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.side-btn {
+  width: 60px;
+  height: 60px;
+  background: var(--panel-metal);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+  font-size: 1.2rem;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.side-btn.active {
+  border-color: var(--accent-neon);
+  color: var(--accent-neon);
+  box-shadow: 0 0 15px var(--glow-rgba);
+}
+
+.side-btn.danger {
+  color: var(--accent-warn);
+  border-color: var(--accent-warn);
+}
